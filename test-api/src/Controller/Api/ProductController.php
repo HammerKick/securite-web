@@ -57,7 +57,7 @@ final class ProductController extends AbstractController
             'product' => $product
         ], 201);
     }
-    
+
     #[Route('/api/products/deleteProduct/{id}', methods: ['DELETE'])]
     public function deleteProduct(EntityManagerInterface $entityManager, int $id): JsonResponse
     {
