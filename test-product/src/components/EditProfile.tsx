@@ -39,7 +39,7 @@ export default function EditProfile() {
     instance
       .patch(`/api/users/${me.id}`, payload)
       .then(() => {
-        setSuccess("Profil mis à jour");
+        setSuccess("Profil mis à jour !");
         setPassword("");
       })
       .catch((err) => {
