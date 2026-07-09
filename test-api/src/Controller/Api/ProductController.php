@@ -8,19 +8,26 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 final class ProductController extends AbstractController
 {
     #[Route('/api/products/getAllProducts', methods: ['GET'])]
-    public function getAllProducts(EntityManagerInterface $entityManager): JsonResponse
+    public function getAllProducts(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
     {
         $products = $entityManager->getRepository(Product::class)->findAll();
 
-        return $this->json(['products' => $products], 200);
+        $json = $serializer->serialize(
+            ['products' => $products],
+            'json',
+            ['groups' => ['product:read']]
+        );
+
+        return new JsonResponse($json, 200, [], true);
     }
 
     #[Route('/api/products/getProductById/{id}', methods: ['GET'])]
-    public function getProductById(EntityManagerInterface $entityManager, int $id): JsonResponse
+    public function getProductById(EntityManagerInterface $entityManager, SerializerInterface $serializer, int $id): JsonResponse
     {
         $product = $entityManager->getRepository(Product::class)->find($id);
 
@@ -28,11 +35,17 @@ final class ProductController extends AbstractController
             return $this->json(['error' => 'Product not found'], 404);
         }
 
-        return $this->json(['product' => $product], 200);
+        $json = $serializer->serialize(
+            ['product' => $product],
+            'json',
+            ['groups' => ['product:read']]
+        );
+
+        return new JsonResponse($json, 200, [], true);
     }
 
     #[Route('/api/products/addProduct', methods: ['POST'])]
-    public function addProduct(EntityManagerInterface $entityManager, Request $request): JsonResponse
+    public function addProduct(EntityManagerInterface $entityManager, SerializerInterface $serializer, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -52,10 +65,13 @@ final class ProductController extends AbstractController
         $entityManager->persist($product);
         $entityManager->flush();
 
-        return $this->json([
-            'message' => 'Product added successfully',
-            'product' => $product
-        ], 201);
+        $json = $serializer->serialize(
+            ['message' => 'Product added successfully', 'product' => $product],
+            'json',
+            ['groups' => ['product:read']]
+        );
+
+        return new JsonResponse($json, 201, [], true);
     }
 
     #[Route('/api/products/deleteProduct/{id}', methods: ['DELETE'])]

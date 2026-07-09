@@ -9,7 +9,7 @@ interface Product {
   id?: number;
   name: string;
   price: number;
-  available: boolean;
+  isAvailable: boolean;
 }
 
 interface Order {
@@ -25,7 +25,7 @@ function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", price: 0, available: false });
+  const [form, setForm] = useState({ name: "", price: 0, isAvailable: false });
 
   const isAdmin = roles.includes("ROLE_ADMIN");
 
@@ -57,7 +57,7 @@ function App() {
     const newProduct: Product = {
       name: form.name,
       price: form.price,
-      available: form.available,
+      isAvailable: form.isAvailable,
     };
     addProduct(newProduct);
   }
@@ -162,9 +162,9 @@ function App() {
               <tr key={product.id}>
                 <td>{product.name}</td>
                 <td>{product.price.toFixed(2)} €</td>
-                <td>{product.available ? "En stock" : "Hors stock"}</td>
+                <td>{product.isAvailable ? "En stock" : "Hors stock"}</td>
                 <td>
-                  {product.available && (
+                  {product.isAvailable && (
                     <button onClick={() => createOrder(product.id)}>
                       Commander
                     </button>
@@ -220,40 +220,46 @@ function App() {
         </tbody>
       </table>
 
-      <h2 className="text-2xl font-bold mt-4">Ajouter un produit</h2>
-      <form name="addProductForm" onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="name">Nom :</label>
-          <input
-            type="text"
-            id="name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-        </div>
-        <div>
-          <label htmlFor="price">Prix :</label>
-          <input
-            type="number"
-            id="price"
-            step="0.01"
-            value={form.price}
-            onChange={(e) =>
-              setForm({ ...form, price: parseFloat(e.target.value) || 0 })
-            }
-          />
-        </div>
-        <div>
-          <label htmlFor="available">Disponible :</label>
-          <input
-            type="checkbox"
-            id="available"
-            checked={form.available}
-            onChange={(e) => setForm({ ...form, available: e.target.checked })}
-          />
-        </div>
-        <button type="submit">Ajouter</button>
-      </form>
+      {isAdmin && (
+        <>
+          <h2 className="text-2xl font-bold mt-4">Ajouter un produit</h2>
+          <form name="addProductForm" onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="name">Nom :</label>
+              <input
+                type="text"
+                id="name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label htmlFor="price">Prix :</label>
+              <input
+                type="number"
+                id="price"
+                step="0.01"
+                value={form.price}
+                onChange={(e) =>
+                  setForm({ ...form, price: parseFloat(e.target.value) || 0 })
+                }
+              />
+            </div>
+            <div>
+              <label htmlFor="available">Disponible :</label>
+              <input
+                type="checkbox"
+                id="available"
+                checked={form.isAvailable}
+                onChange={(e) =>
+                  setForm({ ...form, isAvailable: e.target.checked })
+                }
+              />
+            </div>
+            <button type="submit">Ajouter</button>
+          </form>
+        </>
+      )}
     </>
   );
 }
