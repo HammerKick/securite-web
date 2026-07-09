@@ -18,10 +18,18 @@ interface Order {
   product_id: number;
 }
 
+interface User {
+  id?: number;
+  email: string;
+  roles: string;
+  phoneNumber: string;
+}
+
 function App() {
   const { token, roles, userId, logout } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", price: 0 });
@@ -38,10 +46,12 @@ function App() {
     Promise.all([
       instance.get<{ products: Product[] }>("/api/products/getAllProducts"),
       instance.get<Order[]>("/order"),
+      instance.get<User[]>("/api/users"),
     ])
-      .then(([productsRes, ordersRes]) => {
+      .then(([productsRes, ordersRes, usersRes]) => {
         setProducts(productsRes.data.products);
         setOrders(ordersRes.data);
+        setUsers(usersRes.data);
       })
       .catch((err) => {
         setError(err.message);
@@ -243,6 +253,29 @@ function App() {
             </div>
             <button type="submit">Ajouter</button>
           </form>
+        </>
+      )}
+
+      {isAdmin && (
+        <>
+          <table>
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Numéro de téléphone</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user: User) => (
+                <tr>
+                  <td>{user.email}</td>
+                  <td>{user.roles}</td>
+                  <td>{user.phoneNumber}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </>
       )}
     </>
