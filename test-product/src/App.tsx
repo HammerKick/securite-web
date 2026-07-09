@@ -9,7 +9,6 @@ interface Product {
   id?: number;
   name: string;
   price: number;
-  isAvailable: boolean;
 }
 
 interface Order {
@@ -25,7 +24,7 @@ function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", price: 0, isAvailable: false });
+  const [form, setForm] = useState({ name: "", price: 0 });
 
   const isAdmin = roles.includes("ROLE_ADMIN");
 
@@ -54,15 +53,15 @@ function App() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const newProduct: Product = {
+    const newProduct = {
       name: form.name,
       price: form.price,
-      isAvailable: form.isAvailable,
+      is_available: true,
     };
     addProduct(newProduct);
   }
 
-  function addProduct(product: Product) {
+  function addProduct(product: Product & { is_available: boolean }) {
     instance
       .post("/api/products/addProduct", product)
       .then((response) => {
@@ -81,6 +80,7 @@ function App() {
       .delete(`/api/products/deleteProduct/${id}`)
       .then(() => {
         setProducts(products.filter((p) => p.id !== id));
+        setOrders(orders.filter((o) => o.product_id !== id));
       })
       .catch((err) => {
         setError(err.response?.data?.error ?? "Erreur lors de la suppression");
@@ -148,27 +148,23 @@ function App() {
           <tr>
             <th>Nom</th>
             <th>Prix</th>
-            <th>Disponibilité</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {products.length === 0 ? (
             <tr>
-              <td colSpan={4}>Aucun produit</td>
+              <td colSpan={3}>Aucun produit</td>
             </tr>
           ) : (
             products.map((product) => (
               <tr key={product.id}>
-                <td>{product.name}</td>
+                <td dangerouslySetInnerHTML={{ __html: product.name }} />
                 <td>{product.price.toFixed(2)} €</td>
-                <td>{product.isAvailable ? "En stock" : "Hors stock"}</td>
                 <td>
-                  {product.isAvailable && (
-                    <button onClick={() => createOrder(product.id)}>
-                      Commander
-                    </button>
-                  )}
+                  <button onClick={() => createOrder(product.id)}>
+                    Commander
+                  </button>
                   {isAdmin && (
                     <span
                       className="hover:cursor-pointer"
@@ -242,17 +238,6 @@ function App() {
                 value={form.price}
                 onChange={(e) =>
                   setForm({ ...form, price: parseFloat(e.target.value) || 0 })
-                }
-              />
-            </div>
-            <div>
-              <label htmlFor="available">Disponible :</label>
-              <input
-                type="checkbox"
-                id="available"
-                checked={form.isAvailable}
-                onChange={(e) =>
-                  setForm({ ...form, isAvailable: e.target.checked })
                 }
               />
             </div>

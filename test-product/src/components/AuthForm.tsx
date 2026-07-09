@@ -7,6 +7,7 @@ export default function AuthForm() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
@@ -26,7 +27,7 @@ export default function AuthForm() {
         });
     } else {
       instance
-        .post("/api/register", { email, password })
+        .post("/api/register", { email, password, isAdmin })
         .then(() => {
           setInfo("Compte créé, vous pouvez maintenant vous connecter.");
           setMode("login");
@@ -67,6 +68,21 @@ export default function AuthForm() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
+
+        {mode === "register" && (
+          <div>
+            <label htmlFor="isAdmin">
+              <input
+                type="checkbox"
+                id="isAdmin"
+                checked={isAdmin}
+                onChange={(e) => setIsAdmin(e.target.checked)}
+              />{" "}
+              Créer un compte admin (test)
+            </label>
+          </div>
+        )}
+
         <button type="submit">
           {mode === "login" ? "Se connecter" : "S'inscrire"}
         </button>

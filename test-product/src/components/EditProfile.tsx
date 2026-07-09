@@ -11,6 +11,7 @@ export default function EditProfile() {
   const [me, setMe] = useState<Me | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -20,6 +21,9 @@ export default function EditProfile() {
       .then((res) => {
         setMe(res.data);
         setEmail(res.data.email);
+        // VULN (TP sécu) : commentaire stocké côté client, aucune sanitization
+        const savedComment = localStorage.getItem(`comment_${res.data.id}`);
+        if (savedComment) setComment(savedComment);
       })
       .catch((err) => setError(err.response?.data?.message ?? err.message));
   }, []);
@@ -39,7 +43,8 @@ export default function EditProfile() {
     instance
       .patch(`/api/users/${me.id}`, payload)
       .then(() => {
-        setSuccess("Profil mis à jour !");
+        localStorage.setItem(`comment_${me.id}`, comment);
+        setSuccess("Profil mis à jour");
         setPassword("");
       })
       .catch((err) => {
@@ -79,8 +84,19 @@ export default function EditProfile() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
+        <div>
+          <label htmlFor="profile-comment">Commentaire :</label>
+          <textarea
+            id="profile-comment"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          />
+        </div>
         <button type="submit">Mettre à jour</button>
       </form>
+
+      <h3 className="text-xl font-bold mt-4">Aperçu du commentaire</h3>
+      <div dangerouslySetInnerHTML={{ __html: comment }} />
     </div>
   );
 }
