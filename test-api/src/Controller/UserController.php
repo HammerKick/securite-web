@@ -34,17 +34,18 @@ final class UserController extends AbstractController
     }
 
     #[Route('/{id}', name: 'user_show', methods: ['GET'])]
-    public function show(int $id): JsonResponse
+    public function show($id): JsonResponse
     {
-        $user = $this->userRepository->find($id);
+
+        $conn = $this->em->getConnection();
+        $sql = "SELECT * FROM user WHERE id = " . $id;
+        $user = $conn->executeQuery($sql)->fetchAssociative();
 
         if (!$user) {
             return $this->json(['message' => 'Utilisateur non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        $json = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
-
-        return new JsonResponse($json, Response::HTTP_OK, [], true);
+        return $this->json($user);
     }
 
     #[Route('/{id}', name: 'user_update', methods: ['PUT', 'PATCH'])]

@@ -24,6 +24,7 @@ class JwtService
             'sub' => $user->getId(),   // identifiant de l'utilisateur
             'email' => $user->getEmail(),
             'roles' => $user->getRoles(),
+            'phoneNumber' => $user->getPhoneNumber(),
         ];
 
         return JWT::encode($payload, $this->secret, 'HS256');

@@ -79,6 +79,7 @@ final class AuthController extends AbstractController
             'id' => $user->getId(),
             'email' => $user->getEmail(),
             'roles' => $user->getRoles(),
+            'phoneNumber' => $user->getPhoneNumber(),
         ]);
     }
 }

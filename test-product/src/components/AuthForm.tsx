@@ -7,6 +7,7 @@ export default function AuthForm() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -27,7 +28,12 @@ export default function AuthForm() {
         });
     } else {
       instance
-        .post("/api/register", { email, password, isAdmin })
+        .post("/api/register", {
+          email,
+          password,
+          phoneNumber: phoneNumber.trim() === "" ? null : phoneNumber,
+          isAdmin,
+        })
         .then(() => {
           setInfo("Compte créé, vous pouvez maintenant vous connecter.");
           setMode("login");
@@ -68,6 +74,19 @@ export default function AuthForm() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
+
+        {mode === "register" && (
+          <div>
+            <label htmlFor="phoneNumber">Numéro de téléphone :</label>
+            <input
+              type="tel"
+              id="phoneNumber"
+              placeholder="0612345678"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+            />
+          </div>
+        )}
 
         {mode === "register" && (
           <div>

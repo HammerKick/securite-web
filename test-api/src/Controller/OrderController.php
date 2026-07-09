@@ -29,22 +29,20 @@ final class OrderController extends AbstractController
         return $this->json($data);
     }
 
-    #[Route('/order/{id}', name: 'app_order_show', methods: ['GET'])]
-    public function show(int $id, OrderRepository $orderRepository): JsonResponse
-    {
-        $order = $orderRepository->find($id);
+        #[Route('/order/{id}', name: 'app_order_show', methods: ['GET'])]
+        public function show($id, EntityManagerInterface $em): JsonResponse
+        {
 
-        if (!$order) {
-            return $this->json(['error' => 'Not found'], 404);
+            $conn = $em->getConnection();
+            $sql = "SELECT * FROM `order` WHERE id = " . $id;
+            $result = $conn->executeQuery($sql)->fetchAssociative();
+
+            if (!$result) {
+                return $this->json(['error' => 'Not found'], 404);
+            }
+
+            return $this->json($result);
         }
-
-        return $this->json([
-            'id' => $order->getId(),
-            'date' => $order->getDate()?->format('Y-m-d H:i:s'),
-            'user_id' => $order->getUserId()?->getId(),
-            'product_id' => $order->getProduct()?->getId(),
-        ]);
-    }
 
     #[Route('/order', name: 'app_order_create', methods: ['POST'])]
     public function create(Request $request, EntityManagerInterface $em): JsonResponse

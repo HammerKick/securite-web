@@ -11,6 +11,7 @@ interface AuthContextType {
   token: string | null;
   roles: string[];
   userId: number | null;
+  phoneNumber: string | null;
   login: (token: string) => void;
   logout: () => void;
 }
@@ -24,11 +25,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [roles, setRoles] = useState<string[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
       setRoles([]);
       setUserId(null);
+      setPhoneNumber(null);
       return;
     }
 
@@ -36,14 +39,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .get<{
         id: number;
         roles: string[];
+        phoneNumber: string | null;
       }>("/api/me")
       .then((res) => {
         setRoles(res.data.roles);
         setUserId(res.data.id);
+        setPhoneNumber(res.data.phoneNumber);
       })
       .catch(() => {
         setRoles([]);
         setUserId(null);
+        setPhoneNumber(null);
       });
   }, [token]);
 
@@ -57,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setRoles([]);
     setUserId(null);
+    setPhoneNumber(null);
   }
 
   return (
@@ -65,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
         roles,
         userId,
+        phoneNumber,
         login,
         logout,
       }}

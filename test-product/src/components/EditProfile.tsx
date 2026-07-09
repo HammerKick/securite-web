@@ -5,12 +5,14 @@ interface Me {
   id: number;
   email: string;
   roles: string[];
+  phoneNumber?: string | null;
 }
 
 export default function EditProfile() {
   const [me, setMe] = useState<Me | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -21,6 +23,7 @@ export default function EditProfile() {
       .then((res) => {
         setMe(res.data);
         setEmail(res.data.email);
+        setPhoneNumber(res.data.phoneNumber ?? "");
         // VULN (TP sécu) : commentaire stocké côté client, aucune sanitization
         const savedComment = localStorage.getItem(`comment_${res.data.id}`);
         if (savedComment) setComment(savedComment);
@@ -35,7 +38,14 @@ export default function EditProfile() {
 
     if (!me) return;
 
-    const payload: { email: string; password?: string } = { email };
+    const payload: {
+      email: string;
+      password?: string;
+      phoneNumber?: string | null;
+    } = {
+      email,
+      phoneNumber: phoneNumber.trim() === "" ? null : phoneNumber,
+    };
     if (password.trim() !== "") {
       payload.password = password;
     }
@@ -71,6 +81,16 @@ export default function EditProfile() {
             id="profile-email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="profile-phone">Numéro de téléphone :</label>
+          <input
+            type="tel"
+            id="profile-phone"
+            placeholder="0612345678"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
           />
         </div>
         <div>
