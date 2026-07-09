@@ -34,8 +34,8 @@ class Product
     /**
      * @var Collection<int, Order>
      */
-    #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'product')]
-    #[Groups(['product:read:full'])] // deliberately excluded from 'order:read' and 'product:read'
+    #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'product', cascade: ['remove'], orphanRemoval: true)]
+    #[Groups(['product:read:full'])]
     private Collection $orders;
 
     public function __construct()

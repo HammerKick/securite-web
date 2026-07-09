@@ -33,9 +33,14 @@ final class AuthController extends AbstractController
             return $this->json(['message' => 'Cet email est déjà utilisé'], Response::HTTP_CONFLICT);
         }
 
+        $roles = ['ROLE_USER'];
+        if (!empty($data['isAdmin'])) {
+            $roles[] = 'ROLE_ADMIN';
+        }
+
         $user = new User();
         $user->setEmail($data['email']);
-        $user->setRoles(['ROLE_USER']);
+        $user->setRoles($roles);
         $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
 
         $this->em->persist($user);
