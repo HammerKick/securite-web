@@ -13,3 +13,15 @@ instance.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// si le token a expiré
+instance.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "/";
+    }
+    return Promise.reject(err);
+  },
+);
