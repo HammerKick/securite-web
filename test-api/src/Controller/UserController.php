@@ -38,7 +38,7 @@ final class UserController extends AbstractController
     {
 
         $conn = $this->em->getConnection();
-        $sql = "SELECT * FROM user WHERE id = " . $id;
+        $sql = 'SELECT * FROM "user" WHERE id = ' . $id;
         $user = $conn->executeQuery($sql)->fetchAssociative();
 
         if (!$user) {
