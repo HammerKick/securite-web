@@ -26,20 +26,23 @@ final class ProductController extends AbstractController
         return new JsonResponse($json, 200, [], true);
     }
 
-        #[Route('/api/products/getProductById/{id}', methods: ['GET'])]
-        public function getProductById(EntityManagerInterface $entityManager, $id): JsonResponse
-        {
+    #[Route('/api/products/getProductById/{id}', methods: ['GET'])]
+    public function getProductById(EntityManagerInterface $entityManager, SerializerInterface $serializer, int $id): JsonResponse
+    {
+        $product = $entityManager->getRepository(Product::class)->find($id);
 
-            $conn = $entityManager->getConnection();
-            $sql = "SELECT * FROM product WHERE id = " . $id;
-            $product = $conn->executeQuery($sql)->fetchAssociative();
-
-            if (!$product) {
-                return $this->json(['error' => 'Product not found'], 404);
-            }
-
-            return $this->json(['product' => $product]);
+        if (!$product) {
+            return $this->json(['error' => 'Product not found'], 404);
         }
+
+        $json = $serializer->serialize(
+            ['product' => $product],
+            'json',
+            ['groups' => ['product:read']]
+        );
+
+        return new JsonResponse($json, 200, [], true);
+    }
 
     #[Route('/api/products/addProduct', methods: ['POST'])]
     public function addProduct(EntityManagerInterface $entityManager, SerializerInterface $serializer, Request $request): JsonResponse

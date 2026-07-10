@@ -45,7 +45,7 @@ function App() {
     setLoading(true);
     Promise.all([
       instance.get<{ products: Product[] }>("/api/products/getAllProducts"),
-      instance.get<Order[]>("/order"),
+      instance.get<Order[]>("/api/order"),
       instance.get<User[]>("/api/users"),
     ])
       .then(([productsRes, ordersRes, usersRes]) => {
@@ -107,7 +107,7 @@ function App() {
     };
 
     instance
-      .post("/order", newOrder)
+      .post("/api/order", newOrder)
       .then((response) => {
         setOrders([...orders, { ...newOrder, id: response.data.id }]);
       })
@@ -121,7 +121,7 @@ function App() {
     if (!id) return;
 
     instance
-      .delete(`/order/${id}`)
+      .delete(`/api/order/${id}`)
       .then(() => {
         setOrders(orders.filter((o) => o.id !== id));
       })

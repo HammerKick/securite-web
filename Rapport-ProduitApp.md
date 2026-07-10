@@ -19,7 +19,8 @@ Application simple de commande de produits divers
 - Broken Access Control :
   L'endpoint http://127.0.0.1:8000/order en GET envoie toutes les données possibles et imaginables, un utilisateur non admin ne doit voir que ses propres commandes
   Si on entre dans les DevTools et qu'on regarde la réponse de l'endpoint order, on retrouve toutes les commandes existantes et pas que celles de l'utilisateur, ce qui implique que le backend ne filtre pas les commandes en fonction de quel non-admin est connecté (voir broken-access-control.png à la racine du projet)
-- XSS : le champ commentaire autorise du JavaScript, par exemple avec <img src=x onerror="document.title='Pwned: ' + localStorage.getItem('token')"> on peut se mettre dans le titre le token d'authentification et récupérer les infos (voir xss-injection à la racine)
+  Un souci similaire se présente sur les utilisateurs, les produits ne sont pas concernés car tout est public par défaut sans informations sensibles
+- XSS : le champ commentaire autorise du JavaScript, par exemple avec <img src=x onerror="document.title='Pwned: ' + localStorage.getItem('token')"> on peut se mettre dans le titre le token d'authentification et récupérer les infos (voir xss-injection à la racine) - la raison est qu'il s'agit de dangerouslySetInnerHTML qui, comme son nom l'indique, est dangereux et peut permettre des libertés non prévues pour l'utilisateur
 - Injection SQL : avec php bin/console dbal:run-sql 'SELECT \* FROM \"order\" WHERE id = 1 OR 1=1'
   On obtient :
   ***
@@ -73,7 +74,28 @@ D'ailleurs...
 - Mass assignment : n'importe quel utilisateur peut se donner le rôle admin avec un curl simple
   curl -i -X PUT http://127.0.0.1:8000/api/users/4 \
    -H "Content-Type: application/json" \
-   -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3ODM1ODU1MDcsImV4cCI6MTc4MzU4OTEwNywic3ViIjo0LCJlbWFpbCI6InRlc3QxQGdtYWlsLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdfQ.njlnw5J3zh4mdaQhHY7PoYRRi1lP9i2PY02bC_BKS9U" \
+   -H "Authorization: Bearer TOKEN" \
    -d '{"roles": ["ROLE_ADMIN"]}'
 
   Le résultat : un 200 qui ajoute le rôle admin à l'utilisateur, ce qui lui donne accès aux commandes admin de création de produit, à la liste complète des commandes sur l'interface mais aussi aux infos utilisateurs
+
+# Corrections appliquées
+
+Pour tous les CURL, penser à se log via :
+curl -s -X POST http://127.0.0.1:8000/api/login \
+ -H "Content-Type: application/json" \
+ -d '{"username":"test1@gmail.com","password":"123"}'
+Pour être en utilisateur
+
+- Broken Access Control : ajout d'une vérification du rôle en backend, l'API REST Symfony fait un findAll si l'user est admin, sinon il fait un findBy en passant par l'id utilisateur, voir capture fix broken access control.png
+  Même correctif pour l'utilisateur avec la même vérification de rôle en backend, aucun correctif pour les Produits où tout est accessile par défaut avec aucune donnée sensible
+- XSS : changement de balise, retrait du dangerouslySetInnerHTML pour un span, plus de javascript exécutable (voir xss-fix.png)
+- Injection SQL : retrait dans le backend des query SQL en dur et utilisation de l'ORM de Symfony, ajout de restrictions dans le security.yaml pour une deuxième couche de protection : un CURL avec injection SQL renvoie désormais une erreur 403
+  curl -i "http://localhost:8000/api/users/1%20OR%201=1" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3ODM2NzAxNTcsImV4cCI6MTc4MzY3Mzc1Nywic3ViIjo0LCJlbWFpbCI6InRlc3QxQGdtYWlsLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJwaG9uZU51bWJlciI6IjA2MDgzNzYxMjgifQ.3b3I0CprFpDmetmWl1L7Qsglmp2RpgnJeHa6rGpHbcw"
+  Ceci renvoie une erreur 403 Forbidden : plus d'injection possible, il faut être admin pour espérer quoi que ce soit
+- Mass Assignment : pas de modification de rôle si on est pas admin, c'est le même correctif que sur le Broken Access Control où il faut appliquer quelque chose de similaire au backend
+  curl -i -X PUT http://127.0.0.1:8000/api/users/4 \
+   -H "Content-Type: application/json" \
+   -H "Authorization: Bearer TOKEN" \
+   -d '{"roles": ["ROLE_ADMIN"]}'
+  Ceci renvoie une erreur 403 : plus de changement de rôle possible sans être administrateur

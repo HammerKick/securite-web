@@ -13,15 +13,12 @@ class JwtService
     ) {
     }
 
-    /**
-     * Génère un token JWT signé pour un utilisateur donné.
-     */
     public function generateToken(User $user): string
     {
         $payload = [
-            'iat' => time(),           // date d'émission
-            'exp' => time() + 3600,    // expiration dans 1h
-            'sub' => $user->getId(),   // identifiant de l'utilisateur
+            'iat' => time(),
+            'exp' => time() + 3600,
+            'sub' => $user->getId(),
             'email' => $user->getEmail(),
             'roles' => $user->getRoles(),
             'phoneNumber' => $user->getPhoneNumber(),
@@ -30,10 +27,6 @@ class JwtService
         return JWT::encode($payload, $this->secret, 'HS256');
     }
 
-    /**
-     * Décode et vérifie un token JWT.
-     * Retourne le payload décodé si valide, null sinon (token invalide, expiré, mal signé...).
-     */
     public function decodeToken(string $token): ?object
     {
         try {

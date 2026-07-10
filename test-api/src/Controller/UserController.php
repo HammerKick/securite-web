@@ -11,9 +11,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/users')]
+#[IsGranted('ROLE_USER')]
 final class UserController extends AbstractController
 {
     public function __construct(
@@ -27,25 +29,29 @@ final class UserController extends AbstractController
     #[Route('', name: 'user_list', methods: ['GET'])]
     public function list(): JsonResponse
     {
-        $users = $this->userRepository->findAll();
+        $user = $this->getUser();
+
+        $users = $this->isGranted('ROLE_ADMIN')
+            ? $this->userRepository->findAll()
+            : $this->userRepository->findBy(['id' => $user]);
+
         $json = $this->serializer->serialize($users, 'json', ['groups' => 'user:read']);
 
         return new JsonResponse($json, Response::HTTP_OK, [], true);
     }
 
     #[Route('/{id}', name: 'user_show', methods: ['GET'])]
-    public function show($id): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $user = $this->userRepository->find($id);
 
-        $conn = $this->em->getConnection();
-        $sql = "SELECT * FROM user WHERE id = " . $id;
-        $user = $conn->executeQuery($sql)->fetchAssociative();
-
-        if (!$user) {
+        if (!$user || !$this->canAccess($user)) {
             return $this->json(['message' => 'Utilisateur non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json($user);
+        $json = $this->serializer->serialize($user, 'json', ['groups' => 'user:read']);
+
+        return new JsonResponse($json, Response::HTTP_OK, [], true);
     }
 
     #[Route('/{id}', name: 'user_update', methods: ['PUT', 'PATCH'])]
@@ -53,7 +59,7 @@ final class UserController extends AbstractController
     {
         $user = $this->userRepository->find($id);
 
-        if (!$user) {
+        if (!$user || !$this->canAccess($user)) {
             return $this->json(['message' => 'Utilisateur non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
@@ -64,6 +70,9 @@ final class UserController extends AbstractController
         }
 
         if (isset($data['roles'])) {
+            if (!$this->isGranted('ROLE_ADMIN')) {
+                return $this->json(['message' => 'Seul un administrateur peut modifier les rôles'], Response::HTTP_FORBIDDEN);
+            }
             $user->setRoles($data['roles']);
         }
 
@@ -79,6 +88,7 @@ final class UserController extends AbstractController
     }
 
     #[Route('/{id}', name: 'user_delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(int $id): JsonResponse
     {
         $user = $this->userRepository->find($id);
@@ -91,5 +101,16 @@ final class UserController extends AbstractController
         $this->em->flush();
 
         return $this->json(['message' => 'Utilisateur supprimé'], Response::HTTP_NO_CONTENT);
+    }
+
+    private function canAccess(User $targetUser): bool
+    {
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return true;
+        }
+
+        $currentUser = $this->getUser();
+
+        return $currentUser instanceof User && $currentUser->getId() === $targetUser->getId();
     }
 }

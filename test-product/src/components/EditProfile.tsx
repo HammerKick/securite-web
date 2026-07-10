@@ -24,7 +24,6 @@ export default function EditProfile() {
         setMe(res.data);
         setEmail(res.data.email);
         setPhoneNumber(res.data.phoneNumber ?? "");
-        // VULN (TP sécu) : commentaire stocké côté client, aucune sanitization
         const savedComment = localStorage.getItem(`comment_${res.data.id}`);
         if (savedComment) setComment(savedComment);
       })
@@ -116,7 +115,7 @@ export default function EditProfile() {
       </form>
 
       <h3 className="text-xl font-bold mt-4">Aperçu du commentaire</h3>
-      <div dangerouslySetInnerHTML={{ __html: comment }} />
+      <span>{comment}</span>
     </div>
   );
 }
