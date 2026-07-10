@@ -7,6 +7,7 @@ use App\Repository\UserRepository;
 use App\Service\JwtService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -53,7 +54,6 @@ final class AuthController extends AbstractController
     public function login(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
         $user = $this->userRepository->findOneBy(['email' => $data['email'] ?? '']);
 
         if (!$user || !$this->passwordHasher->isPasswordValid($user, $data['password'] ?? '')) {
@@ -62,7 +62,26 @@ final class AuthController extends AbstractController
 
         $token = $this->jwtService->generateToken($user);
 
-        return $this->json(['token' => $token]);
+        $response = $this->json(['message' => 'Connecté']);
+        $response->headers->setCookie(
+            Cookie::create('token')
+                ->withValue($token)
+                ->withHttpOnly(true)
+                ->withSecure($this->getParameter('kernel.environment') === 'prod')
+                ->withSameSite(Cookie::SAMESITE_LAX)
+                ->withPath('/')
+                ->withExpires(time() + 3600)
+        );
+
+        return $response;
+    }
+
+    #[Route('/api/logout', name: 'app_logout', methods: ['POST'])]
+    public function logout(): JsonResponse
+    {
+        $response = $this->json(['message' => 'Déconnecté']);
+        $response->headers->clearCookie('token', '/', null, true, true, 'lax');
+        return $response;
     }
 
     #[Route('/api/me', name: 'app_me', methods: ['GET'])]

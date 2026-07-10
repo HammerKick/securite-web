@@ -24,13 +24,12 @@ class JwtAuthenticator extends AbstractAuthenticator
 
     public function supports(Request $request): ?bool
     {
-        return $request->headers->has('Authorization')
-            && str_starts_with($request->headers->get('Authorization'), 'Bearer ');
+        return $request->cookies->has('token');
     }
 
     public function authenticate(Request $request): Passport
     {
-        $token = substr($request->headers->get('Authorization'), 7);
+        $token = $request->cookies->get('token');
         $payload = $this->jwtService->decodeToken($token);
 
         if (!$payload) {

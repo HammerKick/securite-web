@@ -26,7 +26,8 @@ interface User {
 }
 
 function App() {
-  const { token, roles, userId, logout } = useAuth();
+  const { isAuthenticated, roles, userId, logout } = useAuth();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -37,7 +38,7 @@ function App() {
   const isAdmin = roles.includes("ROLE_ADMIN");
 
   useEffect(() => {
-    if (!token) {
+    if (!isAuthenticated) {
       setLoading(false);
       return;
     }
@@ -59,7 +60,7 @@ function App() {
       .finally(() => {
         setLoading(false);
       });
-  }, [token]);
+  }, [isAuthenticated]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -140,7 +141,7 @@ function App() {
     );
   }
 
-  if (!token) {
+  if (!isAuthenticated) {
     return <AuthForm />;
   }
 
@@ -169,7 +170,7 @@ function App() {
           ) : (
             products.map((product) => (
               <tr key={product.id}>
-                <td dangerouslySetInnerHTML={{ __html: product.name }} />
+                <td>{product.name}</td>
                 <td>{product.price.toFixed(2)} €</td>
                 <td>
                   <button onClick={() => createOrder(product.id)}>

@@ -89,13 +89,34 @@ Pour être en utilisateur
 
 - Broken Access Control : ajout d'une vérification du rôle en backend, l'API REST Symfony fait un findAll si l'user est admin, sinon il fait un findBy en passant par l'id utilisateur, voir capture fix broken access control.png
   Même correctif pour l'utilisateur avec la même vérification de rôle en backend, aucun correctif pour les Produits où tout est accessile par défaut avec aucune donnée sensible
+
 - XSS : changement de balise, retrait du dangerouslySetInnerHTML pour un span, plus de javascript exécutable (voir xss-fix.png)
+
 - Injection SQL : retrait dans le backend des query SQL en dur et utilisation de l'ORM de Symfony, ajout de restrictions dans le security.yaml pour une deuxième couche de protection : un CURL avec injection SQL renvoie désormais une erreur 403
   curl -i "http://localhost:8000/api/users/1%20OR%201=1" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3ODM2NzAxNTcsImV4cCI6MTc4MzY3Mzc1Nywic3ViIjo0LCJlbWFpbCI6InRlc3QxQGdtYWlsLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJwaG9uZU51bWJlciI6IjA2MDgzNzYxMjgifQ.3b3I0CprFpDmetmWl1L7Qsglmp2RpgnJeHa6rGpHbcw"
   Ceci renvoie une erreur 403 Forbidden : plus d'injection possible, il faut être admin pour espérer quoi que ce soit
+
 - Mass Assignment : pas de modification de rôle si on est pas admin, c'est le même correctif que sur le Broken Access Control où il faut appliquer quelque chose de similaire au backend
   curl -i -X PUT http://127.0.0.1:8000/api/users/4 \
    -H "Content-Type: application/json" \
    -H "Authorization: Bearer TOKEN" \
    -d '{"roles": ["ROLE_ADMIN"]}'
   Ceci renvoie une erreur 403 : plus de changement de rôle possible sans être administrateur
+- Token en localStorage : retrait de notion de Token en front pour que tout soit géré par cookie et via le backend (appel d'api /api/me)
+  Globalement, on génère toujours le token mais cette fois c'est un cookie qui le gère et qui est envoyé en front : plus d'affichage en localStorage et l'app fonctionne de la même manière
+
+  Dans l'API Rest ça donne ça :
+  $response->headers->setCookie(
+            Cookie::create('token')
+                ->withValue($token)
+  ->withHttpOnly(true)
+  ->withSecure($this->getParameter('kernel.environment') === 'prod')
+  ->withSameSite(Cookie::SAMESITE_LAX)
+  ->withPath('/')
+  ->withExpires(time() + 3600)
+  );
+
+Voir "token plus en local storage.png"
+
+- Information Disclosure : tout simplement passer les requêtes vers l'API en HTTPS ce qui automatiquement chiffre le mot de passe
+  En environnement de dev ce n'est pas quelque chose de faisable mais en production par contre il faudra bien penser à faire la modification

@@ -8,74 +8,59 @@ import {
 import { instance } from "../api/axios";
 
 interface AuthContextType {
-  token: string | null;
+  isAuthenticated: boolean;
   roles: string[];
   userId: number | null;
   phoneNumber: string | null;
-  login: (token: string) => void;
+  login: () => void; // appelée après un login réussi, juste pour rafraîchir l'état
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem("token"),
-  );
-
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [roles, setRoles] = useState<string[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!token) {
-      setRoles([]);
-      setUserId(null);
-      setPhoneNumber(null);
-      return;
-    }
-
+  function fetchMe() {
     instance
-      .get<{
-        id: number;
-        roles: string[];
-        phoneNumber: string | null;
-      }>("/api/me")
+      .get("/api/me")
       .then((res) => {
+        setIsAuthenticated(true);
         setRoles(res.data.roles);
         setUserId(res.data.id);
         setPhoneNumber(res.data.phoneNumber);
       })
       .catch(() => {
+        setIsAuthenticated(false);
         setRoles([]);
         setUserId(null);
         setPhoneNumber(null);
       });
-  }, [token]);
+  }
 
-  function login(newToken: string) {
-    localStorage.setItem("token", newToken);
-    setToken(newToken);
+  useEffect(() => {
+    fetchMe(); // au chargement, on vérifie si le cookie est valide
+  }, []);
+
+  function login() {
+    fetchMe();
   }
 
   function logout() {
-    localStorage.removeItem("token");
-    setToken(null);
-    setRoles([]);
-    setUserId(null);
-    setPhoneNumber(null);
+    instance.post("/api/logout").finally(() => {
+      setIsAuthenticated(false);
+      setRoles([]);
+      setUserId(null);
+      setPhoneNumber(null);
+    });
   }
 
   return (
     <AuthContext.Provider
-      value={{
-        token,
-        roles,
-        userId,
-        phoneNumber,
-        login,
-        logout,
-      }}
+      value={{ isAuthenticated, roles, userId, phoneNumber, login, logout }}
     >
       {children}
     </AuthContext.Provider>
@@ -84,10 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 }

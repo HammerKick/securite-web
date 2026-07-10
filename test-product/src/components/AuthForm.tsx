@@ -20,8 +20,8 @@ export default function AuthForm() {
     if (mode === "login") {
       instance
         .post("/api/login", { email, password })
-        .then((res) => {
-          login(res.data.token);
+        .then(() => {
+          login();
         })
         .catch((err) => {
           setError(err.response?.data?.message ?? "Erreur de connexion");
