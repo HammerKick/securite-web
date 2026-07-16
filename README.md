@@ -1,15 +1,15 @@
 # Installation et lancement
 
-1- Clôner le projet git : https://github.com/HammerKick/securite-web
-2- Sur postgreSQL, créer la base de données et coller son URL dans .env (DATABASE_URL)
-3- Générer la clé JWT secrète par le moyen de votre choix puis la coller dans .env (JWT_SECRET)
-4- Dans le dossier du projet, cd test-api
-5- symfony server:start
-6- cd ..
-7- cd test-product
-8- npm run dev
-9- Créez deux comptes utilisateur : test1@gmail.com et test2@gmail.com
-10- Créez un compte admin admin@gmail.com avec la checkbox Admin (pour les tests)
+- Clôner le projet git : https://github.com/HammerKick/securite-web
+- Sur postgreSQL, créer la base de données et coller son URL dans .env (DATABASE_URL)
+- Générer la clé JWT secrète par le moyen de votre choix puis la coller dans .env (JWT_SECRET)
+- Dans le dossier du projet, cd test-api
+- symfony server:start
+- cd ..
+- cd test-product
+- npm run dev
+- Créez deux comptes utilisateur : test1@gmail.com et test2@gmail.com
+- Créez un compte admin admin@gmail.com avec la checkbox Admin (pour les tests)
 
 # Comptes de test
 
