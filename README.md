@@ -5,8 +5,7 @@
 - Générer la clé JWT secrète par le moyen de votre choix puis la coller dans .env (JWT_SECRET)
 - Dans le dossier du projet, cd test-api
 - symfony server:start
-- cd ..
-- cd test-product
+- Sur un autre terminal : cd test-product
 - npm run dev
 - Créez deux comptes utilisateur : test1@gmail.com et test2@gmail.com
 - Créez un compte admin admin@gmail.com avec la checkbox Admin (pour les tests)
